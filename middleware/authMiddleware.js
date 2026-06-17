@@ -15,9 +15,12 @@ const protect = async (req, res, next) => {
 
     // Decode the token and then fetch a fresh user record.
     // This makes deactivated users lose access even if their old token has not expired yet.
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'change-this-secret');
     const [users] = await pool.query(
-      'SELECT id, name, email, role, status, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
+      `SELECT id, full_name, phone, email, role, status, preferred_reminder_method, created_at, updated_at
+       FROM users
+       WHERE id = ?
+       LIMIT 1`,
       [decoded.id]
     );
 

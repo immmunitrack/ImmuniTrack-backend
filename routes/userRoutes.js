@@ -1,11 +1,11 @@
 const express = require('express');
+const { listUsers, updateMe } = require('../controllers/userController');
 const { protect } = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-// Small convenience endpoint that mirrors /api/auth/me.
-router.get('/me', protect, (req, res) => {
-  res.json({ user: req.user });
-});
+router.get('/', protect, authorize('admin', 'health_worker'), listUsers);
+router.put('/me', protect, updateMe);
 
 module.exports = router;

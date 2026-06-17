@@ -1,7 +1,7 @@
 {
-  "name": "jobconnect-backend",
+  "name": "mamacare-backend",
   "version": "1.0.0",
-  "description": "Express and MariaDB API for JobConnect",
+  "description": "Express and MariaDB API for MamaCare Immunisation Tracker",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

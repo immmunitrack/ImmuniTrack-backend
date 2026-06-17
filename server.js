@@ -1,4 +1,3 @@
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -6,18 +5,26 @@ require('dotenv').config();
 const pool = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-const profileRoutes = require('./routes/profileRoutes');
-const jobRoutes = require('./routes/jobRoutes');
-const applicationRoutes = require('./routes/applicationRoutes');
+const childRoutes = require('./routes/childRoutes');
+const scheduleRoutes = require('./routes/scheduleRoutes');
+const immunisationRoutes = require('./routes/immunisationRoutes');
+const reminderRoutes = require('./routes/reminderRoutes');
+const facilityRoutes = require('./routes/facilityRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
-const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || defaultAllowedOrigins.join(','))
+const PORT = process.env.PORT || 5050;
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174'
+];
+const configuredOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...configuredOrigins])];
 
 // CORS allows the React app, which runs on another port during development,
 // to call this API from the browser. localhost and 127.0.0.1 are different
@@ -38,9 +45,6 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Uploaded CV files are served from /uploads/<filename> so employers can open them.
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // Health checks are useful for confirming both Express and the database are reachable.
 app.get('/api/health', async (req, res) => {
   try {
@@ -51,12 +55,13 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Each group of API endpoints is mounted under a clear route prefix.
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/applications', applicationRoutes);
+app.use('/api/children', childRoutes);
+app.use('/api/schedule', scheduleRoutes);
+app.use('/api/immunisations', immunisationRoutes);
+app.use('/api/reminders', reminderRoutes);
+app.use('/api/health-facilities', facilityRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Any request that reached this point did not match a defined route.
@@ -77,5 +82,5 @@ app.use((error, req, res, next) => {
 
 // Start the HTTP server after all middleware and routes have been registered.
 app.listen(PORT, () => {
-  console.log(`JobConnect API running on port ${PORT}`);
+  console.log(`MamaCare API running on port ${PORT}`);
 });

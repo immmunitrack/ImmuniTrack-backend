@@ -1,87 +1,79 @@
-# JobConnect Backend
+# MamaCare Backend
 
-This repository contains the backend API for JobConnect, a learning project that shows students how to build a role-based job marketplace with Node.js, Express, JWT authentication, bcrypt password hashing, MariaDB/MySQL, and Multer file uploads.
+MamaCare Backend is the Node.js API for the MamaCare Immunisation Tracker. It stores caregivers, children, vaccine schedules, immunisation records, reminders, health facilities, and admin reporting data.
 
-The frontend lives in a separate repository named `jobconnect-frontend`.
+This folder is a separate backend repo. Run it together with the `mamacare-frontend` repo.
 
-## What This Backend Teaches
+## Technologies
 
-- How to structure an Express project with routes, controllers, middleware, and config files.
-- How JWT authentication works in a real API.
-- How role-based access control protects admin, employer, and job seeker routes.
-- How to use bcrypt so plain text passwords are never stored.
-- How to query MariaDB/MySQL with `mysql2/promise`.
-- How to upload CV files with Multer.
-- How to enforce ownership, for example employers can edit only their own jobs.
+- Node.js and Express.js for the REST API
+- MySQL or MariaDB for the database
+- mysql2 for database queries
+- JSON Web Tokens for login sessions
+- bcrypt for password hashing
+- CORS for browser access from the React frontend
+- Multer for PDF upload handling
+- Nodemon for development reloads
 
-## Folder Structure
+## Main Features
 
-```text
-jobconnect-backend/
-  config/
-    db.js                  # MySQL connection pool
-  controllers/             # Request handlers and database logic
-  middleware/              # Auth, role checks, and upload handling
-  routes/                  # URL definitions that call controllers
-  uploads/                 # CV files are stored here
-  database/
-    schema.sql             # Tables and relationships
-    seed.sql               # Sample learning data
-  server.js                # Express app entry point
-  package.json
-  .env.example
-```
-
-## Request Flow
-
-1. A browser sends a request to an endpoint such as `POST /api/jobs`.
-2. The route in `routes/jobRoutes.js` decides which middleware and controller should run.
-3. `protect` in `middleware/authMiddleware.js` verifies the JWT and loads `req.user`.
-4. `authorize` in `middleware/roleMiddleware.js` checks the user's role.
-5. The controller validates input, runs SQL queries, and returns JSON.
+- Register and log in caregivers, admins, and health workers
+- Register children and generate vaccine due dates from date of birth
+- Track completed, pending, upcoming, and missed immunisations
+- Generate reminder records for upcoming and overdue visits
+- Manage editable immunisation schedule items
+- Store health facilities and admin dashboard statistics
+- Provide seeded demo users and sample immunisation data
 
 ## Requirements
 
 - Node.js 18 or newer
-- MariaDB or MySQL
 - npm
+- MySQL or MariaDB running locally
+- The `mamacare-frontend` repo for the browser interface
 
 ## Setup
 
-Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-Create your environment file:
+2. Create your environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Update `.env`:
+3. Open `.env` and confirm your database settings:
 
 ```env
-PORT=5000
+PORT=5050
+FRONTEND_URL=http://localhost:5173
 DB_HOST=localhost
+DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
-DB_NAME=jobconnect
-DB_PORT=3306
-JWT_SECRET=replace_this_with_a_long_random_secret
+DB_NAME=mamacare_immunisation
+JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:5173
 ```
 
-Create and seed the database:
+Use your own MySQL username and password if they are different.
+
+## Database Setup
+
+Import the schema first, then the seed data:
 
 ```bash
 mysql -u root -p < database/schema.sql
 mysql -u root -p < database/seed.sql
 ```
 
-Start the backend:
+The seed file creates demo accounts, children, vaccine schedule records, health facilities, immunisation records, and reminders.
+
+## Run The API
 
 ```bash
 npm run dev
@@ -90,76 +82,49 @@ npm run dev
 The API runs at:
 
 ```text
-http://localhost:5000
+http://localhost:5050/api
 ```
 
 Health check:
 
-```text
-GET http://localhost:5000/api/health
+```bash
+curl http://localhost:5050/api/health
 ```
 
-## Default Seed Accounts
+Expected result:
 
-Use these accounts after loading `database/seed.sql`:
+```json
+{"status":"ok","database":"connected"}
+```
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | `admin@jobconnect.com` | `password123` |
-| Employer | `employer1@jobconnect.com` | `password123` |
-| Employer | `employer2@jobconnect.com` | `password123` |
-| Job Seeker | `seeker1@jobconnect.com` | `password123` |
-| Job Seeker | `seeker2@jobconnect.com` | `password123` |
+## Demo Login Accounts
 
-## Main Endpoints
+- Admin or health worker: `admin@mamacare.test` / `Admin123!`
+- Caregiver: `amina@mamacare.test` / `Care123!`
+- Caregiver: `sarah@mamacare.test` / `Care123!`
+- Caregiver: `prossy@mamacare.test` / `Care123!`
 
-Auth:
+## Project Structure
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
+```text
+config/       Database connection
+controllers/  Request handlers for each feature
+database/     SQL schema and seed files
+middleware/   Auth and upload middleware
+routes/       API route definitions
+services/     Immunisation and reminder business logic
+server.js     Express app entry point
+```
 
-Profiles:
-
-- `GET /api/profile`
-- `PUT /api/profile/employer`
-- `PUT /api/profile/job-seeker`
-
-Jobs:
-
-- `GET /api/jobs`
-- `GET /api/jobs/:id`
-- `GET /api/jobs/employer/my-jobs`
-- `POST /api/jobs`
-- `PUT /api/jobs/:id`
-- `DELETE /api/jobs/:id`
-
-Applications:
-
-- `POST /api/applications/apply/:jobId`
-- `GET /api/applications/my-applications`
-- `GET /api/applications/job/:jobId`
-- `PUT /api/applications/:id/status`
-
-Admin:
-
-- `GET /api/admin/stats`
-- `GET /api/admin/users`
-- `GET /api/admin/jobs`
-- `GET /api/admin/applications`
-- `PUT /api/admin/users/:id/status`
-
-## Student Exercises
-
-- Add validation for stronger passwords during registration.
-- Add pagination to job browsing.
-- Add an endpoint for admins to create another admin account.
-- Store uploaded CVs in cloud storage instead of local disk.
-- Add automated API tests for auth and job ownership rules.
-
-## Useful Checks
+## Useful Scripts
 
 ```bash
-node --check server.js
-npm audit --omit=dev
+npm run dev    # Start development server with nodemon
+npm start      # Start production-style server with node
 ```
+
+## Learning Notes
+
+Start with `server.js` to see how middleware and routes are connected. Then read the matching route and controller files, for example `routes/childRoutes.js` and `controllers/childController.js`. The due date logic lives in `services/immunisationCalculator.js`.
+
+MamaCare is a learning project and reminder tool. It does not replace advice from a qualified health worker.

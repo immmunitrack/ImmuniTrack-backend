@@ -1,92 +1,112 @@
--- Create the project database if it does not already exist.
-CREATE DATABASE IF NOT EXISTS jobconnect;
-USE jobconnect;
+CREATE DATABASE IF NOT EXISTS mamacare_immunisation;
+USE mamacare_immunisation;
 
--- Drop child tables first because they contain foreign keys to parent tables.
-DROP TABLE IF EXISTS applications;
-DROP TABLE IF EXISTS jobs;
-DROP TABLE IF EXISTS job_seeker_profiles;
-DROP TABLE IF EXISTS employer_profiles;
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS reminders;
+DROP TABLE IF EXISTS child_immunisations;
+DROP TABLE IF EXISTS children;
+DROP TABLE IF EXISTS immunisation_schedule;
+DROP TABLE IF EXISTS health_facilities;
 DROP TABLE IF EXISTS users;
+SET FOREIGN_KEY_CHECKS = 1;
 
--- users stores login credentials and the role used by the API for access control.
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(120) NOT NULL,
-  email VARCHAR(160) NOT NULL UNIQUE,
+  full_name VARCHAR(150) NOT NULL,
+  phone VARCHAR(30) NOT NULL UNIQUE,
+  email VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'employer', 'job_seeker') NOT NULL,
+  role ENUM('admin', 'health_worker', 'caregiver') NOT NULL DEFAULT 'caregiver',
   status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+  preferred_reminder_method ENUM('in_app', 'sms', 'whatsapp') NOT NULL DEFAULT 'in_app',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- employer_profiles stores company information for users whose role is employer.
--- user_id is UNIQUE because each employer should have only one company profile.
-CREATE TABLE employer_profiles (
+CREATE TABLE health_facilities (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL UNIQUE,
-  company_name VARCHAR(160) NOT NULL,
-  company_description TEXT,
-  industry VARCHAR(120),
-  location VARCHAR(160),
-  phone VARCHAR(40),
-  website VARCHAR(255),
+  name VARCHAR(180) NOT NULL,
+  district VARCHAR(100) NOT NULL,
+  subcounty VARCHAR(120),
+  phone VARCHAR(30),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE immunisation_schedule (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  vaccine_name VARCHAR(180) NOT NULL,
+  description TEXT,
+  recommended_age_label VARCHAR(80) NOT NULL,
+  due_offset_days INT NOT NULL,
+  dose_number INT NOT NULL DEFAULT 1,
+  is_required TINYINT(1) NOT NULL DEFAULT 1,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE children (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  caregiver_id INT NOT NULL,
+  full_name VARCHAR(150) NOT NULL,
+  date_of_birth DATE NOT NULL,
+  gender ENUM('Female', 'Male', 'Other') NOT NULL,
+  birth_place VARCHAR(180),
+  district VARCHAR(100) NOT NULL,
+  subcounty VARCHAR(120),
+  health_facility_id INT,
+  immunisation_card_number VARCHAR(80),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_employer_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  CONSTRAINT fk_children_caregiver FOREIGN KEY (caregiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_children_facility FOREIGN KEY (health_facility_id) REFERENCES health_facilities(id) ON DELETE SET NULL
 );
 
--- job_seeker_profiles stores candidate information and the default CV filename.
--- CV files are stored on disk in backend/uploads; only the filename is stored here.
-CREATE TABLE job_seeker_profiles (
+CREATE TABLE child_immunisations (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL UNIQUE,
-  phone VARCHAR(40),
-  location VARCHAR(160),
-  skills TEXT,
-  education TEXT,
-  experience_level VARCHAR(80),
-  cv_file VARCHAR(255),
+  child_id INT NOT NULL,
+  schedule_id INT NOT NULL,
+  due_date DATE NOT NULL,
+  status ENUM('pending', 'upcoming', 'completed', 'missed') NOT NULL DEFAULT 'pending',
+  date_received DATE,
+  health_facility_id INT,
+  notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_job_seeker_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  UNIQUE KEY unique_child_schedule (child_id, schedule_id),
+  INDEX idx_child_immunisations_due (due_date),
+  INDEX idx_child_immunisations_status (status),
+  CONSTRAINT fk_immunisations_child FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE,
+  CONSTRAINT fk_immunisations_schedule FOREIGN KEY (schedule_id) REFERENCES immunisation_schedule(id) ON DELETE CASCADE,
+  CONSTRAINT fk_immunisations_facility FOREIGN KEY (health_facility_id) REFERENCES health_facilities(id) ON DELETE SET NULL
 );
 
--- jobs are owned by employer users. Deleting an employer deletes their jobs through ON DELETE CASCADE.
-CREATE TABLE jobs (
+CREATE TABLE reminders (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  employer_id INT NOT NULL,
-  title VARCHAR(180) NOT NULL,
-  description TEXT NOT NULL,
-  requirements TEXT,
-  responsibilities TEXT,
-  location VARCHAR(160) NOT NULL,
-  job_type ENUM('Full-time', 'Part-time', 'Contract', 'Internship', 'Remote') NOT NULL,
-  salary_range VARCHAR(100),
-  deadline DATE NOT NULL,
-  status ENUM('open', 'closed') NOT NULL DEFAULT 'open',
+  child_id INT NOT NULL,
+  caregiver_id INT NOT NULL,
+  child_immunisation_id INT NOT NULL,
+  reminder_type ENUM('seven_day', 'one_day', 'overdue') NOT NULL,
+  message TEXT NOT NULL,
+  reminder_date DATE NOT NULL,
+  status ENUM('unread', 'read') NOT NULL DEFAULT 'unread',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_jobs_employer FOREIGN KEY (employer_id) REFERENCES users(id) ON DELETE CASCADE
+  UNIQUE KEY unique_event_reminder (child_immunisation_id, reminder_type),
+  CONSTRAINT fk_reminders_child FOREIGN KEY (child_id) REFERENCES children(id) ON DELETE CASCADE,
+  CONSTRAINT fk_reminders_caregiver FOREIGN KEY (caregiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_reminders_immunisation FOREIGN KEY (child_immunisation_id) REFERENCES child_immunisations(id) ON DELETE CASCADE
 );
 
--- applications connect a job seeker to a job.
--- unique_job_application prevents the same job seeker from applying to the same job twice.
-CREATE TABLE applications (
+CREATE TABLE audit_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  job_id INT NOT NULL,
-  job_seeker_id INT NOT NULL,
-  cover_letter TEXT NOT NULL,
-  cv_file VARCHAR(255) NOT NULL,
-  status ENUM('Pending', 'Shortlisted', 'Rejected', 'Hired') NOT NULL DEFAULT 'Pending',
-  applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_applications_job FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
-  CONSTRAINT fk_applications_seeker FOREIGN KEY (job_seeker_id) REFERENCES users(id) ON DELETE CASCADE,
-  CONSTRAINT unique_job_application UNIQUE (job_id, job_seeker_id)
+  user_id INT,
+  action VARCHAR(120) NOT NULL,
+  entity_type VARCHAR(80),
+  entity_id INT,
+  metadata JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
-
--- Indexes help common search/filter operations run faster as the database grows.
-CREATE INDEX idx_jobs_search ON jobs (title, location, job_type, status);
-CREATE INDEX idx_applications_status ON applications (status);
