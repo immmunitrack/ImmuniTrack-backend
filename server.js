@@ -13,12 +13,23 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const defaultAllowedOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || defaultAllowedOrigins.join(','))
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // CORS allows the React app, which runs on another port during development,
-// to call this API from the browser.
+// to call this API from the browser. localhost and 127.0.0.1 are different
+// browser origins, so the local defaults allow both.
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true
   })
 );
