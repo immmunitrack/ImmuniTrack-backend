@@ -1,5 +1,7 @@
 USE jobconnect;
 
+-- All seeded users use the bcrypt hash for password123.
+-- In a real system, each user chooses their own password during registration.
 INSERT INTO users (id, name, email, password, role, status) VALUES
 (1, 'Admin User', 'admin@jobconnect.com', '$2b$10$LNJPkbtC6ASk9j.E/35sIO7BILb7tzbSO1IoJCsL.ARCHLCSbcJQq', 'admin', 'active'),
 (2, 'Amina Tech', 'employer1@jobconnect.com', '$2b$10$LNJPkbtC6ASk9j.E/35sIO7BILb7tzbSO1IoJCsL.ARCHLCSbcJQq', 'employer', 'active'),
@@ -10,10 +12,12 @@ INSERT INTO users (id, name, email, password, role, status) VALUES
 (7, 'Peter Kato', 'seeker4@jobconnect.com', '$2b$10$LNJPkbtC6ASk9j.E/35sIO7BILb7tzbSO1IoJCsL.ARCHLCSbcJQq', 'job_seeker', 'active'),
 (8, 'Joan Akello', 'seeker5@jobconnect.com', '$2b$10$LNJPkbtC6ASk9j.E/35sIO7BILb7tzbSO1IoJCsL.ARCHLCSbcJQq', 'job_seeker', 'active');
 
+-- Two sample employers with company profile data.
 INSERT INTO employer_profiles (user_id, company_name, company_description, industry, location, phone, website) VALUES
 (2, 'BluePeak Software', 'A product engineering company building web platforms for growing businesses.', 'Technology', 'Kampala, Uganda', '+256700111222', 'https://bluepeak.example.com'),
 (3, 'GreenHarvest Logistics', 'A regional logistics and supply chain company serving food and retail partners.', 'Logistics', 'Entebbe, Uganda', '+256700333444', 'https://greenharvest.example.com');
 
+-- Five sample job seekers. The CV filenames are examples that match the upload filename pattern.
 INSERT INTO job_seeker_profiles (user_id, phone, location, skills, education, experience_level, cv_file) VALUES
 (4, '+256701000001', 'Kampala, Uganda', 'React, JavaScript, Bootstrap, REST APIs', 'BSc Computer Science', 'Mid level', 'sample-sarah-cv.pdf'),
 (5, '+256701000002', 'Jinja, Uganda', 'Node.js, Express, MySQL, API testing', 'Diploma in Software Engineering', 'Junior', 'sample-brian-cv.pdf'),
@@ -21,6 +25,7 @@ INSERT INTO job_seeker_profiles (user_id, phone, location, skills, education, ex
 (7, '+256701000004', 'Kampala, Uganda', 'Operations, inventory, dispatch coordination', 'Diploma in Procurement', 'Mid level', 'sample-peter-cv.pdf'),
 (8, '+256701000005', 'Gulu, Uganda', 'Digital marketing, content writing, SEO', 'BA Mass Communication', 'Junior', 'sample-joan-cv.pdf');
 
+-- Eight sample jobs across both employers. Open jobs appear in public browsing.
 INSERT INTO jobs (id, employer_id, title, description, requirements, responsibilities, location, job_type, salary_range, deadline, status) VALUES
 (1, 2, 'Frontend Developer', 'Build responsive user interfaces for customer-facing web applications.', 'React, JavaScript, HTML, CSS, REST API experience.', 'Develop UI components, integrate APIs, collaborate with designers, fix frontend defects.', 'Kampala, Uganda', 'Full-time', 'UGX 2.5M - 4M', '2026-08-30', 'open'),
 (2, 2, 'Backend Developer', 'Create secure APIs and database-backed services for JobConnect-style platforms.', 'Node.js, Express, MySQL, authentication, Git.', 'Design endpoints, write SQL queries, improve performance, document APIs.', 'Remote', 'Remote', 'UGX 3M - 5M', '2026-09-15', 'open'),
@@ -31,6 +36,7 @@ INSERT INTO jobs (id, employer_id, title, description, requirements, responsibil
 (7, 3, 'Customer Support Officer', 'Support business customers with shipment status and service requests.', 'Customer support, CRM tools, clear writing.', 'Respond to tickets, update shipment records, resolve complaints, share feedback.', 'Jinja, Uganda', 'Part-time', 'UGX 900K - 1.4M', '2026-07-31', 'open'),
 (8, 3, 'Warehouse Assistant', 'Assist with inventory handling, packing, and stock records.', 'Attention to detail, physical stamina, basic inventory records.', 'Pack orders, update stock logs, maintain warehouse standards, report discrepancies.', 'Entebbe, Uganda', 'Contract', 'UGX 800K - 1.2M', '2026-07-20', 'closed');
 
+-- Sample applications demonstrate the four status values used by employers.
 INSERT INTO applications (job_id, job_seeker_id, cover_letter, cv_file, status) VALUES
 (1, 4, 'I have built several React interfaces and would like to contribute to your product team.', 'sample-sarah-cv.pdf', 'Shortlisted'),
 (2, 5, 'My backend training focused on Express APIs and MySQL schemas, which fits this role.', 'sample-brian-cv.pdf', 'Pending'),

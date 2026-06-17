@@ -14,16 +14,23 @@ const adminRoutes = require('./routes/adminRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// CORS allows the React app, which runs on another port during development,
+// to call this API from the browser.
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     credentials: true
   })
 );
+
+// These middleware functions parse JSON and form bodies before routes read req.body.
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Uploaded CV files are served from /uploads/<filename> so employers can open them.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Health checks are useful for confirming both Express and the database are reachable.
 app.get('/api/health', async (req, res) => {
   try {
     await pool.query('SELECT 1');
@@ -33,6 +40,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Each group of API endpoints is mounted under a clear route prefix.
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', profileRoutes);
@@ -40,10 +48,12 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Any request that reached this point did not match a defined route.
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
+// Central error handler. Multer upload errors and normal server errors are returned as JSON.
 app.use((error, req, res, next) => {
   if (error.name === 'MulterError') {
     return res.status(400).json({ message: error.message });
@@ -54,6 +64,7 @@ app.use((error, req, res, next) => {
   res.status(500).json({ message: 'Server error', error: error.message });
 });
 
+// Start the HTTP server after all middleware and routes have been registered.
 app.listen(PORT, () => {
   console.log(`JobConnect API running on port ${PORT}`);
 });

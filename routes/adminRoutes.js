@@ -11,7 +11,10 @@ const { authorize } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
+// Everything in this router is protected and admin-only.
 router.use(protect, authorize('admin'));
+
+// Admin reporting and moderation endpoints.
 router.get('/stats', stats);
 router.get('/users', users);
 router.get('/jobs', jobs);

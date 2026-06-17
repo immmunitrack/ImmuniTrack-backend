@@ -2,6 +2,7 @@ const pool = require('../config/db');
 
 const getProfile = async (req, res) => {
   try {
+    // The same endpoint returns the correct profile table for the logged-in role.
     if (req.user.role === 'employer') {
       const [rows] = await pool.query('SELECT * FROM employer_profiles WHERE user_id = ? LIMIT 1', [
         req.user.id
@@ -30,6 +31,8 @@ const upsertEmployerProfile = async (req, res) => {
   }
 
   try {
+    // ON DUPLICATE KEY UPDATE works because employer_profiles.user_id is UNIQUE.
+    // It lets one endpoint handle both "create profile" and "update profile".
     await pool.query(
       `INSERT INTO employer_profiles
         (user_id, company_name, company_description, industry, location, phone, website)
@@ -63,14 +66,17 @@ const upsertEmployerProfile = async (req, res) => {
 
 const upsertJobSeekerProfile = async (req, res) => {
   const { phone, location, skills, education, experience_level } = req.body;
+  // Multer adds req.file when a new CV was uploaded.
   const cvFile = req.file ? req.file.filename : req.body.existing_cv_file || null;
 
   try {
+    // If the user does not upload a new CV, keep the previous filename.
     const [existing] = await pool.query('SELECT cv_file FROM job_seeker_profiles WHERE user_id = ? LIMIT 1', [
       req.user.id
     ]);
     const nextCvFile = cvFile || (existing[0] && existing[0].cv_file) || null;
 
+    // Same upsert pattern as employer profiles, but with CV support.
     await pool.query(
       `INSERT INTO job_seeker_profiles
         (user_id, phone, location, skills, education, experience_level, cv_file)

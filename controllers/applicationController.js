@@ -1,5 +1,7 @@
 const pool = require('../config/db');
 
+// Shared SELECT fragment for application views.
+// It joins jobs, employer profiles, users, and seeker profiles so the UI can show useful context.
 const applicationSelect = `
   SELECT applications.*, jobs.title AS job_title, jobs.location AS job_location,
          jobs.job_type, jobs.employer_id, employer_profiles.company_name,
@@ -23,11 +25,13 @@ const applyForJob = async (req, res) => {
   }
 
   try {
+    // Job seekers can apply only to jobs that exist and are currently open.
     const [jobs] = await pool.query('SELECT * FROM jobs WHERE id = ? LIMIT 1', [jobId]);
     if (!jobs.length || jobs[0].status !== 'open') {
       return res.status(404).json({ message: 'Open job not found' });
     }
 
+    // The database also has a UNIQUE constraint, but this gives a friendlier API message.
     const [duplicate] = await pool.query(
       'SELECT id FROM applications WHERE job_id = ? AND job_seeker_id = ? LIMIT 1',
       [jobId, req.user.id]
@@ -36,6 +40,7 @@ const applyForJob = async (req, res) => {
       return res.status(409).json({ message: 'You have already applied for this job' });
     }
 
+    // Use the uploaded application CV if provided; otherwise use the profile CV.
     const [profiles] = await pool.query('SELECT cv_file FROM job_seeker_profiles WHERE user_id = ? LIMIT 1', [
       req.user.id
     ]);
@@ -44,6 +49,7 @@ const applyForJob = async (req, res) => {
       return res.status(400).json({ message: 'Please upload a CV before applying' });
     }
 
+    // New applications always start as Pending.
     const [result] = await pool.query(
       'INSERT INTO applications (job_id, job_seeker_id, cover_letter, cv_file, status) VALUES (?, ?, ?, ?, ?)',
       [jobId, req.user.id, cover_letter, cvFile, 'Pending']
@@ -60,6 +66,7 @@ const applyForJob = async (req, res) => {
 
 const myApplications = async (req, res) => {
   try {
+    // The job_seeker_id filter enforces "my private records only."
     const [rows] = await pool.query(
       `${applicationSelect} WHERE applications.job_seeker_id = ? ORDER BY applications.applied_at DESC`,
       [req.user.id]
@@ -72,6 +79,7 @@ const myApplications = async (req, res) => {
 
 const jobApplications = async (req, res) => {
   try {
+    // First load the job owner so we can enforce employer ownership.
     const [jobs] = await pool.query('SELECT employer_id FROM jobs WHERE id = ? LIMIT 1', [req.params.jobId]);
     if (!jobs.length) {
       return res.status(404).json({ message: 'Job not found' });
@@ -99,12 +107,14 @@ const updateApplicationStatus = async (req, res) => {
   }
 
   try {
+    // Load joined application data so we can check the employer_id of the job.
     const [rows] = await pool.query(`${applicationSelect} WHERE applications.id = ? LIMIT 1`, [
       req.params.id
     ]);
     if (!rows.length) {
       return res.status(404).json({ message: 'Application not found' });
     }
+    // Employers can update only applications for jobs they posted; admins can update any.
     if (req.user.role !== 'admin' && rows[0].employer_id !== req.user.id) {
       return res.status(403).json({ message: 'You can only update applicants for your own jobs' });
     }

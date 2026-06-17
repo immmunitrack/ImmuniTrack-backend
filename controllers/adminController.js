@@ -2,6 +2,7 @@ const pool = require('../config/db');
 
 const stats = async (req, res) => {
   try {
+    // These separate count queries keep the dashboard simple and easy to read for students.
     const [[users]] = await pool.query('SELECT COUNT(*) AS total FROM users');
     const [[employers]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role = 'employer'");
     const [[seekers]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role = 'job_seeker'");
@@ -25,6 +26,7 @@ const stats = async (req, res) => {
 
 const users = async (req, res) => {
   try {
+    // Admin user lists omit password hashes.
     const [rows] = await pool.query(
       'SELECT id, name, email, role, status, created_at, updated_at FROM users ORDER BY created_at DESC'
     );
@@ -36,6 +38,7 @@ const users = async (req, res) => {
 
 const jobs = async (req, res) => {
   try {
+    // Admins see both open and closed jobs for moderation.
     const [rows] = await pool.query(`
       SELECT jobs.*, users.name AS employer_name, employer_profiles.company_name
       FROM jobs
@@ -51,6 +54,7 @@ const jobs = async (req, res) => {
 
 const applications = async (req, res) => {
   try {
+    // Joined data gives admins applicant, job, and company context in one request.
     const [rows] = await pool.query(`
       SELECT applications.*, jobs.title AS job_title, employer_profiles.company_name,
              users.name AS job_seeker_name, users.email AS job_seeker_email
@@ -72,6 +76,7 @@ const updateUserStatus = async (req, res) => {
     return res.status(400).json({ message: 'Status must be active or inactive' });
   }
   if (Number(req.params.id) === req.user.id) {
+    // Prevent an admin from locking themselves out by mistake.
     return res.status(400).json({ message: 'You cannot deactivate your own account' });
   }
 

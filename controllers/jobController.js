@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 
+// Shared SELECT fragment so job list and detail endpoints return consistent fields.
 const jobSelect = `
   SELECT jobs.*, users.name AS employer_name, employer_profiles.company_name,
          employer_profiles.industry, employer_profiles.website
@@ -14,13 +15,16 @@ const listJobs = async (req, res) => {
   const params = [];
 
   if (req.user && req.user.role === 'admin' && status) {
+    // Admins can filter by status when using this controller through authenticated clients.
     filters.push('jobs.status = ?');
     params.push(status);
   } else {
+    // Public browsing should show only open jobs.
     filters.push("jobs.status = 'open'");
   }
 
   if (search) {
+    // A broad keyword search checks common fields job seekers expect.
     filters.push(`(
       jobs.title LIKE ? OR employer_profiles.company_name LIKE ? OR jobs.location LIKE ?
       OR jobs.job_type LIKE ? OR jobs.description LIKE ? OR jobs.requirements LIKE ?
@@ -88,6 +92,8 @@ const createJob = async (req, res) => {
   }
 
   try {
+    // employer_id comes from the JWT user, not from the request body.
+    // That prevents one employer from posting as another employer.
     const [result] = await pool.query(
       `INSERT INTO jobs
         (employer_id, title, description, requirements, responsibilities, location, job_type, salary_range, deadline, status)
@@ -113,6 +119,7 @@ const createJob = async (req, res) => {
 
 const employerJobs = async (req, res) => {
   try {
+    // Employers can list only jobs where they are the owner.
     const [rows] = await pool.query(
       `${jobSelect} WHERE jobs.employer_id = ? ORDER BY jobs.created_at DESC`,
       [req.user.id]
@@ -138,6 +145,7 @@ const updateJob = async (req, res) => {
   ];
   const payload = {};
   fields.forEach((field) => {
+    // Only fields in the allow-list can be updated.
     if (req.body[field] !== undefined) payload[field] = req.body[field];
   });
 
@@ -154,10 +162,12 @@ const updateJob = async (req, res) => {
     if (!jobs.length) {
       return res.status(404).json({ message: 'Job not found' });
     }
+    // Admins can moderate any job; employers can edit only their own jobs.
     if (req.user.role !== 'admin' && jobs[0].employer_id !== req.user.id) {
       return res.status(403).json({ message: 'You can only update your own jobs' });
     }
 
+    // Build the SET clause from the validated allow-list above.
     const assignments = Object.keys(payload).map((field) => `${field} = ?`);
     await pool.query(`UPDATE jobs SET ${assignments.join(', ')} WHERE id = ?`, [
       ...Object.values(payload),
@@ -177,6 +187,7 @@ const deleteJob = async (req, res) => {
     if (!jobs.length) {
       return res.status(404).json({ message: 'Job not found' });
     }
+    // Ownership check mirrors updateJob.
     if (req.user.role !== 'admin' && jobs[0].employer_id !== req.user.id) {
       return res.status(403).json({ message: 'You can only delete your own jobs' });
     }
