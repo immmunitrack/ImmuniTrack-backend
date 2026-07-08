@@ -57,4 +57,9 @@ const updateStatus = async (req, res) => {
   res.json({ message: 'Schedule status updated' });
 };
 
-module.exports = { listSchedule, createScheduleItem, updateScheduleItem, updateStatus };
+const deleteScheduleItem = async (req, res) => {
+  await pool.query('DELETE FROM immunisation_schedule WHERE id = ?', [req.params.id]);
+  res.json({ message: 'Schedule item deleted' });
+};
+
+module.exports = { listSchedule, createScheduleItem, updateScheduleItem, updateStatus, deleteScheduleItem };

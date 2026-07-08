@@ -116,11 +116,17 @@ const updateChild = async (req, res) => {
 };
 
 const deleteChild = async (req, res) => {
-  if (!(await canAccessChild(req.user, req.params.id))) {
-    return res.status(404).json({ message: 'Child not found' });
-  }
-  await pool.query('DELETE FROM children WHERE id = ?', [req.params.id]);
-  res.json({ message: 'Child deleted' });
-};
+  try {
+    const child = await Child.findById(req.params.id);
 
+    if (!child) {
+      return res.status(404).json({ message: 'Child not found' });
+    }
+    await child.deleteOne();
+
+    res.status(200).json({ message: 'Child deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete child', error: error.message });
+  }
+};
 module.exports = { createChild, myChildren, getChild, updateChild, deleteChild, canAccessChild };
