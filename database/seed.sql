@@ -1,10 +1,10 @@
-USE mamacare_immunisation;
+USE immunitrack_immunisation;
 
 INSERT INTO users (id, full_name, phone, email, password, role, status, preferred_reminder_method) VALUES
-(1, 'Grace Nakato', '+256700000001', 'admin@mamacare.test', '$2b$10$X9dyAJPYOv7iGvybwQWU/.S3PifGUiJWce9DVifLdESg.H57e9z1y', 'admin', 'active', 'in_app'),
-(2, 'Amina Nansubuga', '+256700000002', 'amina@mamacare.test', '$2b$10$1/RC7k6HZ3GmMSnuzCnGP./0OZqLI.kidLAXFdS5Y3o4ILqMacb4y', 'caregiver', 'active', 'sms'),
-(3, 'Sarah Achiro', '+256700000003', 'sarah@mamacare.test', '$2b$10$1/RC7k6HZ3GmMSnuzCnGP./0OZqLI.kidLAXFdS5Y3o4ILqMacb4y', 'caregiver', 'active', 'whatsapp'),
-(4, 'Prossy Namutebi', '+256700000004', 'prossy@mamacare.test', '$2b$10$1/RC7k6HZ3GmMSnuzCnGP./0OZqLI.kidLAXFdS5Y3o4ILqMacb4y', 'caregiver', 'active', 'in_app');
+(1, 'Grace Nakato', '+256700000001', 'admin@immunitrack.test', '$2b$10$X9dyAJPYOv7iGvybwQWU/.S3PifGUiJWce9DVifLdESg.H57e9z1y', 'admin', 'active', 'in_app'),
+(2, 'Amina Nansubuga', '+256700000002', 'amina@immunitrack.test', '$2b$10$1/RC7k6HZ3GmMSnuzCnGP./0OZqLI.kidLAXFdS5Y3o4ILqMacb4y', 'caregiver', 'active', 'sms'),
+(3, 'Sarah Achiro', '+256700000003', 'sarah@immunitrack.test', '$2b$10$1/RC7k6HZ3GmMSnuzCnGP./0OZqLI.kidLAXFdS5Y3o4ILqMacb4y', 'caregiver', 'active', 'whatsapp'),
+(4, 'Prossy Namutebi', '+256700000004', 'prossy@immunitrack.test', '$2b$10$1/RC7k6HZ3GmMSnuzCnGP./0OZqLI.kidLAXFdS5Y3o4ILqMacb4y', 'caregiver', 'active', 'in_app');
 
 INSERT INTO health_facilities (id, name, district, subcounty, phone) VALUES
 (1, 'Kisenyi Health Centre IV', 'Kampala', 'Central Division', '+256414000100'),

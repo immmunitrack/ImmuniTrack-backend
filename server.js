@@ -82,5 +82,5 @@ app.use((error, req, res, next) => {
 
 // Start the HTTP server after all middleware and routes have been registered.
 app.listen(PORT, () => {
-  console.log(`MamaCare API running on port ${PORT}`);
+  console.log(`ImmuniTrack API running on port ${PORT}`);
 });

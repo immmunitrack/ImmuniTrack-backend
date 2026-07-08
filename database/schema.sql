@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS mamacare_immunisation;
-USE mamacare_immunisation;
+CREATE DATABASE IF NOT EXISTS immunitrack_immunisation;
+USE immunitrack_immunisation;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS audit_logs;

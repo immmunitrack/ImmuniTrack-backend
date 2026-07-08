@@ -1,7 +1,7 @@
 {
-  "name": "mamacare-backend",
+  "name": "immunitrack-backend",
   "version": "1.0.0",
-  "description": "Express and MariaDB API for MamaCare Immunisation Tracker",
+  "description": "Express and MariaDB API for ImmuniTrack Immunisation Tracker",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
