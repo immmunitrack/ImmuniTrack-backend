@@ -1,8 +1,8 @@
-# ImmuniTrack Backend
+# MamaCare Backend
 
-ImmuniTrack Backend is the Node.js API for the ImmuniTrack Immunisation Tracker. It stores caregivers, children, vaccine schedules, immunisation records, reminders, health facilities, and admin reporting data.
+MamaCare Backend is the Node.js API for the MamaCare Immunisation Tracker. It stores caregivers, children, vaccine schedules, immunisation records, reminders, health facilities, and admin reporting data.
 
-This folder is a separate backend repo. Run it together with the `immunitrack-frontend` repo.
+This folder is a separate backend repo. Run it together with the `mamacare-frontend` repo.
 
 ## Technologies
 
@@ -30,7 +30,7 @@ This folder is a separate backend repo. Run it together with the `immunitrack-fr
 - Node.js 18 or newer
 - npm
 - MySQL or MariaDB running locally
-- The `immunitrack-frontend` repo for the browser interface
+- The `mamacare-frontend` repo for the browser interface
 
 ## Setup
 
@@ -40,13 +40,13 @@ This folder is a separate backend repo. Run it together with the `immunitrack-fr
 npm install
 ```
 
-2. Create your environment file:
+1. Create your environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Open `.env` and confirm your database settings:
+1. Open `.env` and confirm your database settings:
 
 ```env
 PORT=5050
@@ -55,7 +55,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
-DB_NAME=immunitrack_immunisation
+DB_NAME=mamacare_immunisation
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
 ```
@@ -99,10 +99,10 @@ Expected result:
 
 ## Demo Login Accounts
 
-- Admin or health worker: `admin@immunitrack.test` / `Admin123!`
-- Caregiver: `amina@immunitrack.test` / `Care123!`
-- Caregiver: `sarah@immunitrack.test` / `Care123!`
-- Caregiver: `prossy@immunitrack.test` / `Care123!`
+- Admin or health worker: `admin@mamacare.test` / `Admin123!`
+- Caregiver: `amina@mamacare.test` / `Care123!`
+- Caregiver: `sarah@mamacare.test` / `Care123!`
+- Caregiver: `prossy@mamacare.test` / `Care123!`
 
 ## Project Structure
 
@@ -127,4 +127,4 @@ npm start      # Start production-style server with node
 
 Start with `server.js` to see how middleware and routes are connected. Then read the matching route and controller files, for example `routes/childRoutes.js` and `controllers/childController.js`. The due date logic lives in `services/immunisationCalculator.js`.
 
-ImmuniTrack is a learning project and reminder tool. It does not replace advice from a qualified health worker.
+MamaCare is a learning project and reminder tool. It does not replace advice from a qualified health worker.
