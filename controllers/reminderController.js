@@ -9,8 +9,8 @@ const myReminders = async (req, res) => {
      JOIN children c ON c.id = r.child_id
      JOIN child_immunisations ci ON ci.id = r.child_immunisation_id
      JOIN immunisation_schedule s ON s.id = ci.schedule_id
-     WHERE r.caregiver_id = ?
-     ORDER BY r.status = 'unread' DESC, r.reminder_date DESC`,
+     WHERE r.caregiver_id = $1
+     ORDER BY (r.status = 'unread') DESC, r.reminder_date DESC`,
     [req.user.id]
   );
   res.json({ reminders });
@@ -18,8 +18,8 @@ const myReminders = async (req, res) => {
 
 const markRead = async (req, res) => {
   const params = req.user.role === 'caregiver' ? [req.params.id, req.user.id] : [req.params.id];
-  const caregiverClause = req.user.role === 'caregiver' ? 'AND caregiver_id = ?' : '';
-  await pool.query(`UPDATE reminders SET status = 'read' WHERE id = ? ${caregiverClause}`, params);
+  const caregiverClause = req.user.role === 'caregiver' ? 'AND caregiver_id = $2' : '';
+  await pool.query(`UPDATE reminders SET status = 'read' WHERE id = $1 ${caregiverClause}`, params);
   res.json({ message: 'Reminder marked as read' });
 };
 

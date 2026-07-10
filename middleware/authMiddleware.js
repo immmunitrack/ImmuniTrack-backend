@@ -17,9 +17,9 @@ const protect = async (req, res, next) => {
     // This makes deactivated users lose access even if their old token has not expired yet.
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'change-this-secret');
     const [users] = await pool.query(
-      `SELECT id, full_name, phone, email, role, status, preferred_reminder_method, two_factor_enabled, created_at, updated_at
+      `SELECT id, full_name, phone, email, role, status, preferred_reminder_method, created_at, updated_at
        FROM users
-       WHERE id = ?
+       WHERE id = $1
        LIMIT 1`,
       [decoded.id]
     );

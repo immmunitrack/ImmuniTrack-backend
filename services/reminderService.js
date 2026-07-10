@@ -32,7 +32,7 @@ const generateReminders = async (caregiverId = null) => {
   const params = [];
   let caregiverClause = '';
   if (caregiverId) {
-    caregiverClause = 'AND c.caregiver_id = ?';
+    caregiverClause = 'AND c.caregiver_id = $1';
     params.push(caregiverId);
   }
 
@@ -59,9 +59,10 @@ const generateReminders = async (caregiverId = null) => {
     for (const type of types) {
       const reminder = buildReminder(event, type);
       const [result] = await pool.query(
-        `INSERT IGNORE INTO reminders
+        `INSERT INTO reminders
           (child_id, caregiver_id, child_immunisation_id, reminder_type, message, reminder_date, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'unread')`,
+         VALUES ($1, $2, $3, $4, $5, $6, 'unread')
+         ON CONFLICT (child_immunisation_id, reminder_type) DO NOTHING`,
         [
           event.child_id,
           event.caregiver_id,

@@ -4,7 +4,7 @@ const { generateReminders } = require('../services/reminderService');
 
 const canAccessChild = async (user, childId) => {
   if (user.role === 'admin' || user.role === 'health_worker') return true;
-  const [rows] = await pool.query('SELECT id FROM children WHERE id = ? AND caregiver_id = ? LIMIT 1', [childId, user.id]);
+  const [rows] = await pool.query('SELECT id FROM children WHERE id = $1 AND caregiver_id = $2 LIMIT 1', [childId, user.id]);
   return rows.length > 0;
 };
 
@@ -36,7 +36,8 @@ const createChild = async (req, res) => {
     const [result] = await connection.query(
       `INSERT INTO children
        (caregiver_id, full_name, date_of_birth, gender, district, subcounty, health_facility_id, immunisation_card_number, birth_place)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id`,
       [
         req.user.id,
         full_name,
@@ -49,10 +50,11 @@ const createChild = async (req, res) => {
         birth_place || null
       ]
     );
-    await ensureChildImmunisations(result.insertId, connection);
+    const insertId = result.id || result.insertId;
+    await ensureChildImmunisations(insertId, connection);
     await connection.commit();
     await generateReminders(req.user.id);
-    res.status(201).json({ message: 'Child registered', id: result.insertId });
+    res.status(201).json({ message: 'Child registered', id: insertId });
   } catch (error) {
     await connection.rollback();
     res.status(500).json({ message: 'Could not register child', error: error.message });
@@ -62,7 +64,7 @@ const createChild = async (req, res) => {
 };
 
 const myChildren = async (req, res) => {
-  const [children] = await pool.query(`${selectChildren} WHERE c.caregiver_id = ? ORDER BY c.full_name`, [req.user.id]);
+  const [children] = await pool.query(`${selectChildren} WHERE c.caregiver_id = $1 ORDER BY c.full_name`, [req.user.id]);
   res.json({ children });
 };
 
@@ -70,7 +72,7 @@ const getChild = async (req, res) => {
   if (!(await canAccessChild(req.user, req.params.id))) {
     return res.status(404).json({ message: 'Child not found' });
   }
-  const [children] = await pool.query(`${selectChildren} WHERE c.id = ? LIMIT 1`, [req.params.id]);
+  const [children] = await pool.query(`${selectChildren} WHERE c.id = $1 LIMIT 1`, [req.params.id]);
   res.json({ child: children[0] });
 };
 
@@ -96,9 +98,9 @@ const updateChild = async (req, res) => {
 
   await pool.query(
     `UPDATE children
-     SET full_name = ?, date_of_birth = ?, gender = ?, district = ?, subcounty = ?, health_facility_id = ?,
-         immunisation_card_number = ?, birth_place = ?
-     WHERE id = ?`,
+     SET full_name = $1, date_of_birth = $2, gender = $3, district = $4, subcounty = $5, health_facility_id = $6,
+         immunisation_card_number = $7, birth_place = $8
+     WHERE id = $9`,
     [
       full_name,
       date_of_birth,
@@ -118,16 +120,17 @@ const updateChild = async (req, res) => {
 const deleteChild = async (req, res) => {
   try {
     const childId = req.params.id;
-    const [child] = await pool.query('SELECT id FROM children WHERE id = ? LIMIT 1', [childId]);
+    const [child] = await pool.query('SELECT id FROM children WHERE id = $1 LIMIT 1', [childId]);
 
     if (!child.length) {
       return res.status(404).json({ message: 'Child not found' });
     }
 
-    await pool.query('DELETE FROM children WHERE id = ?', [childId]);
+    await pool.query('DELETE FROM children WHERE id = $1', [childId]);
     res.status(200).json({ message: 'Child deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete child', error: error.message });
   }
 };
+
 module.exports = { createChild, myChildren, getChild, updateChild, deleteChild, canAccessChild };
