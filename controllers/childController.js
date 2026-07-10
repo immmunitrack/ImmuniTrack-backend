@@ -117,13 +117,14 @@ const updateChild = async (req, res) => {
 
 const deleteChild = async (req, res) => {
   try {
-    const child = await Child.findById(req.params.id);
+    const childId = req.params.id;
+    const [child] = await pool.query('SELECT id FROM children WHERE id = ? LIMIT 1', [childId]);
 
-    if (!child) {
+    if (!child.length) {
       return res.status(404).json({ message: 'Child not found' });
     }
-    await child.deleteOne();
 
+    await pool.query('DELETE FROM children WHERE id = ?', [childId]);
     res.status(200).json({ message: 'Child deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete child', error: error.message });

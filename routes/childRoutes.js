@@ -5,10 +5,10 @@ const { authorize } = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-router.post('/', protect, authorize('caregiver'), createChild);
+router.post('/', protect, authorize('caregiver', 'health_worker', 'admin'), createChild);
 router.get('/my-children', protect, authorize('caregiver'), myChildren);
 router.get('/:id', protect, getChild);
 router.put('/:id', protect, updateChild);
-router.delete('/:id', protect, deleteChild);
+router.delete('/:id', protect, authorize('admin'), deleteChild);
 
 module.exports = router;
