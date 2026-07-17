@@ -3,9 +3,14 @@ require('dotenv').config();
 
 let pgPool;
 
+const sslConfig = (process.env.NODE_ENV === 'production' || (process.env.DB_URL && process.env.DB_URL.includes('supabase')))
+  ? { rejectUnauthorized: false }
+  : undefined;
+
 if (process.env.DB_URL) {
   pgPool = new Pool({
     connectionString: process.env.DB_URL,
+    ssl: sslConfig,
   });
 } else {
   pgPool = new Pool({
@@ -14,6 +19,7 @@ if (process.env.DB_URL) {
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'immunitrack_immunisation',
     port: Number(process.env.DB_PORT || 5432),
+    ssl: sslConfig,
   });
 }
 
